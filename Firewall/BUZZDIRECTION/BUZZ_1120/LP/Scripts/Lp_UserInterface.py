@@ -473,13 +473,11 @@ class LpInputProcessing(cmd.Cmd):
     def do_call(self,line):
         
         usrIn=line.split(" ")
-        if len(usrIn)!=1:
+        if len(usrIn) != 1 or usrIn[0] != "":
             return
             #print "Incorrect number of arguments.  Enter \'help call\' for usage information."
-        elif usrIn[0]=="":
-            res=self.functions.cmdCall(self.printBlocker)
         else:
-            return
+            res=self.functions.cmdCall(self.printBlocker)
             #print "Incorrect number of arguments.  Enter \'help call\' for usage information."
     
     #Prints all of the functions available from each module by going through helpDict
@@ -575,7 +573,6 @@ class LpInputProcessing(cmd.Cmd):
         self.architecture=inArch
     
     def __sort(self,modKey,toSort):
-        toReturn=[]
         fMaps={}
         fNums=[]
         for fName in toSort:
@@ -584,18 +581,11 @@ class LpInputProcessing(cmd.Cmd):
             fNums.append(int(str(fNum).split('.')[1]))
 
         fNums=sorted(fNums)
-        for num in fNums:
-            toReturn.append(fMaps[num])
-
-        return toReturn
+        return [fMaps[num] for num in fNums]
     
     #Checks if there are any empty strings in a list returned by CursesDriver
     def __checkArg(self,toCheck):
-        for element in toCheck:
-            if element[1]=='':
-                return element[0]
-                
-        return 1
+        return next((element[0] for element in toCheck if element[1]==''), 1)
         
     def __resolveFuncName(self,name):
         try:

@@ -7,22 +7,30 @@ def parseIface(args):
     mod=args[0]
     architecture=args[1]
     lpArch=args[2]
-    curDir=os.getcwd() 
+    curDir=os.getcwd()
     modName=mod.split('/')[len(mod.split('/'))-1]
     modStripped=modName.split('_')[0]
     modStripped=modStripped.split('.')[0]
     try:
         if architecture=='':
-            dom=xml.dom.minidom.parse((curDir+'/../Mods/Base/Buzzdirection/'+lpArch+'/'+modStripped+".xml"))
+            dom = xml.dom.minidom.parse(
+                f'{curDir}/../Mods/Base/Buzzdirection/{lpArch}/{modStripped}.xml'
+            )
         else:
-            dom=xml.dom.minidom.parse((curDir+'/../Mods/Base/Buzzdirection/'+architecture+'/'+modStripped+".xml"))
+            dom = xml.dom.minidom.parse(
+                f'{curDir}/../Mods/Base/Buzzdirection/{architecture}/{modStripped}.xml'
+            )
 
     except IOError:
         try:
             if architecture=='':
-                dom=xml.dom.minidom.parse((curDir+'/../Mods/App/Buzzdirection/'+lpArch+'/'+modStripped+".xml"))
+                dom = xml.dom.minidom.parse(
+                    f'{curDir}/../Mods/App/Buzzdirection/{lpArch}/{modStripped}.xml'
+                )
             else:
-                dom=xml.dom.minidom.parse((curDir+'/../Mods/App/Buzzdirection/'+architecture+'/'+modStripped+".xml"))
+                dom = xml.dom.minidom.parse(
+                    f'{curDir}/../Mods/App/Buzzdirection/{architecture}/{modStripped}.xml'
+                )
 
         except IOError:
             try:
@@ -34,14 +42,14 @@ def parseIface(args):
     return int(ifaceNum)
 
 def parseDefaultDir():
-    curDir=os.getcwd() 
-    dom=xml.dom.minidom.parse((curDir+'/Xml/Lp.xml'))
+    curDir=os.getcwd()
+    dom = xml.dom.minidom.parse(f'{curDir}/Xml/Lp.xml')
     defaultDir = dom.getElementsByTagName('defaultDir')
 
     if len(defaultDir)>0:
-        return "%s%s"%(curDir,defaultDir[0].firstChild.data)
+        return f"{curDir}{defaultDir[0].firstChild.data}"
     else:
-        return (curDir+'/Output/')
+        return f'{curDir}/Output/'
 
 #Parse the xml file for the module specified in usrIn and populate the Modules dictionary
 #Arguments:

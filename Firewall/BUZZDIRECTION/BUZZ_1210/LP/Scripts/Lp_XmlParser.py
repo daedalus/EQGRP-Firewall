@@ -5,44 +5,42 @@ import Lp_UserInterface
 import textwrap
 
 def parseIface(mod,architecture,lpArch):
-    curDir=os.getcwd() 
+    curDir=os.getcwd()
     modName=mod.split('/')[len(mod.split('/'))-1]
     modStripped=modName.split('_')[0]
     modStripped=modStripped.split('.')[0]
-    
+
     modPath = findModuleXml(modStripped)
     if modPath == '':
         return -1
 
-    dom=xml.dom.minidom.parse(os.path.join(modPath,(modStripped+'.xml')))
-    
+    dom = xml.dom.minidom.parse(os.path.join(modPath, f'{modStripped}.xml'))
+
     ifaceNum=dom.getElementsByTagName('iface')[0].firstChild.data
     return int(ifaceNum)
 
 def parseDefaultDir():
-    curDir=os.getcwd() 
-    dom=xml.dom.minidom.parse((curDir+'/Xml/Lp.xml'))
+    curDir=os.getcwd()
+    dom = xml.dom.minidom.parse(f'{curDir}/Xml/Lp.xml')
     defaultDir = dom.getElementsByTagName('defaultDir')
 
     if len(defaultDir)>0:
-        return "%s%s"%(curDir,defaultDir[0].firstChild.data)
+        return f"{curDir}{defaultDir[0].firstChild.data}"
     else:
-        return (curDir+'/Output/')
+        return f'{curDir}/Output/'
 
 def __getParameter(command,atterName,save):
     parameters = command.getElementsByTagName('parameters')[0]
     parameterList = parameters.getElementsByTagName('parameter')
     for parameter in parameterList:
         if parameter.getAttribute('name') == atterName:
-            if save == True:
-                data = parameter.firstChild.data
-                f = open(atterName,'w+')
-                f.write(data)
-                f.close()
-                return os.path.join(os.getcwd(),'BubbleKeys',atterName)
-            else:
+            if save != True:
                 return parameter.firstChild.data
 
+            data = parameter.firstChild.data
+            with open(atterName,'w+') as f:
+                f.write(data)
+            return os.path.join(os.getcwd(),'BubbleKeys',atterName)
     return -1
 
 def parseBubblewrapXml(pathToXml,funcDict):
@@ -131,7 +129,7 @@ def parseBubblewrapXml(pathToXml,funcDict):
         return -1
 
 def findModuleXml(modName):
-    curDir=os.getcwd() 
+    curDir=os.getcwd()
     baseDir = os.path.join(curDir,'../Mods')
     modTypes = os.listdir(baseDir)
     for modType in modTypes:
@@ -141,16 +139,19 @@ def findModuleXml(modName):
             for arch in arches:
                 files = os.listdir(os.path.join(baseDir,modType,project,arch))
                 for file in files:
-                    if file.find(modName+'.xml')>=0:
+                    if file.find(f'{modName}.xml') >= 0:
                         return os.path.join(baseDir,modType,project,arch)
 
     #try one more time in cur/Xml
     files = os.listdir(os.path.join(curDir,'Xml'))
-    for file in files:
-        if file.find(modName+'.xml')>=0:
-            return os.path.join(curDir,'Xml')
-
-    return ''
+    return next(
+        (
+            os.path.join(curDir, 'Xml')
+            for file in files
+            if file.find(f'{modName}.xml') >= 0
+        ),
+        '',
+    )
 
 #Parse the xml file for the module specified in usrIn and populate the Modules dictionary
 #Arguments:

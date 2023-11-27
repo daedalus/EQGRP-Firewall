@@ -50,21 +50,21 @@ class DNSRecord:
         if len(name) == 0 or len(name) > 253:
             raise ValueError
         if type == 'PTR' and not self.is_valid_ip(name) or \
-           type != 'PTR' and not self.is_valid_name(name):
+               type != 'PTR' and not self.is_valid_name(name):
             raise ValueError
 
         type = type.upper()
-        if not type in Qtypes.keys():
+        if type not in Qtypes.keys():
             raise ValueError
 
         ttl = int(ttl)
-        if 0 > ttl:
+        if ttl < 0:
             raise ValueError
 
         if len(data) == 0 or len(data) > 253:
             raise ValueError
         if type == 'A' and not self.is_valid_ip(data) or \
-           type != 'A' and not self.is_valid_name(data):
+               type != 'A' and not self.is_valid_name(data):
             raise ValueError
 
         self.name = name
@@ -73,12 +73,7 @@ class DNSRecord:
         self.data = data
 
     def is_valid_name(self, name):
-        result = True
-        for s in name.split('.'):
-            if len(s) > 63:
-                result = False
-                break
-        return result
+        return all(len(s) <= 63 for s in name.split('.'))
 
     def is_valid_ip(self, addr):
         result = True
@@ -122,9 +117,14 @@ def parse_arguments(parser):
         action='store', type='string', dest='outfile',
         help='Output file name (optional). By default the resulting data is written to stdout.')
     parser.add_option(
-        '-f', '--flag',
-        action='append', type='choice', choices=Flags.keys(), dest='flags',
-        help='Header flags to set: %s (optional).' % Flags.keys())
+        '-f',
+        '--flag',
+        action='append',
+        type='choice',
+        choices=Flags.keys(),
+        dest='flags',
+        help=f'Header flags to set: {Flags.keys()} (optional).',
+    )
     parser.add_option(
         '-a', '--answer',
         action='append', type='DNSRecord', dest='answers',
@@ -157,10 +157,14 @@ class DNSCompressionData:
             (offset + self.data[0][0]+len(self.data[0][1]) + 5, name))
 
     def find(self, name):
-        for d in self.data:
-            if d[1].endswith(name):
-                return d[0] + (len(d[1]) - len(name))
-        return -1
+        return next(
+            (
+                d[0] + (len(d[1]) - len(name))
+                for d in self.data
+                if d[1].endswith(name)
+            ),
+            -1,
+        )
 
 
 class DNSInjection:
@@ -172,25 +176,23 @@ class DNSInjection:
         self.ucount = 0
         self.dcount = 0
         self.compression = compression
-        self.compressor = DNSCompressionData(12, '.' + question)
+        self.compressor = DNSCompressionData(12, f'.{question}')
 
     def add_section(self, section, record):
         if section == 'a':
             self.acount += 1
-        elif section == 'u':
-            self.ucount += 1
         elif section == 'd':
             self.dcount += 1
+        elif section == 'u':
+            self.ucount += 1
         else:
             return
 
         if record.type == 'PTR':
-            fixed = ''
-            for s in reversed(record.name.split('.')):
-                fixed += s + '.'
-            record.name = fixed + 'in-addr.arpa'
+            fixed = ''.join(f'{s}.' for s in reversed(record.name.split('.')))
+            record.name = f'{fixed}in-addr.arpa'
 
-        if self.compression == True and not 'OFFSET' in record.name:
+        if self.compression == True and 'OFFSET' not in record.name:
             record.name = self.compress(record.name)
 
         name = self.encode_name(record.name)
@@ -203,7 +205,7 @@ class DNSInjection:
         if record.type == 'A':
             data = self.encode_address(record.data)
         else:
-            if self.compression == True and not 'OFFSET' in record.data:
+            if self.compression == True and 'OFFSET' not in record.data:
                 record.data = self.compress(record.data, is_data=True)
             data = self.encode_name(record.data)
 
@@ -211,17 +213,14 @@ class DNSInjection:
             len(data), data)
 
     def encode_address(self, address):
-        packed = ''
-        for section in address.split('.'):
-            packed += struct.pack('>B',
-                int(section))
-        return packed
+        return ''.join(
+            struct.pack('>B', int(section)) for section in address.split('.')
+        )
 
     def encode_name(self, name):
         packed = ''
         for section in name.split('.'):
-            pointer = re.match('^(.*)OFFSET:(\d+)$', section)
-            if pointer:
+            if pointer := re.match('^(.*)OFFSET:(\d+)$', section):
                 if len(pointer.groups()[0]) != 0:
                     packed += struct.pack('>B%ds' % len(pointer.groups()[0]),
                         len(pointer.groups()[0]), pointer.groups()[0])
@@ -233,13 +232,13 @@ class DNSInjection:
             packed, 0)
 
     def compress(self, name, is_data=False):
-        s = '.' + name
+        s = f'.{name}'
         t = ''
         compressed = name
         while True:
             offset = self.compressor.find(s)
             if offset != -1:
-                compressed = t + 'OFFSET:' + str(offset)
+                compressed = f'{t}OFFSET:{str(offset)}'
                 break
             i = s.find('.', 1)
             if i == -1:
@@ -247,9 +246,9 @@ class DNSInjection:
             t = t + s[:i]
             s = s[i:]
         if is_data == False:
-            self.compressor.add(len(self.sections), '.' + name)
+            self.compressor.add(len(self.sections), f'.{name}')
         else:
-            self.compressor.add(len(self.sections) + 2, '.' + name)
+            self.compressor.add(len(self.sections) + 2, f'.{name}')
         if compressed.startswith('.'):
             compressed = compressed[1:]
         return compressed
@@ -353,7 +352,7 @@ Examples
         parser.error("at least one -a or --answer required")
 
     # need to know the length of the question to compress
-    if True == options.compression and '' == options.question:
+    if options.compression == True and options.question == '':
         parser.error("-q or --question required for compression")
 
     injection = DNSInjection(
@@ -371,9 +370,8 @@ Examples
     output = injection.finish()
 
     if options.outfile:
-        file = open(options.outfile, 'wb')
-        file.write(output)
-        file.close()
+        with open(options.outfile, 'wb') as file:
+            file.write(output)
     else:
         sys.stdout.write(output)
 

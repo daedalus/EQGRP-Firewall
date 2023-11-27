@@ -68,35 +68,22 @@ class CursesDriver:
         self.textBoxes=["","","","","","","","","","","","","","","","","","","","",""]
         self.variableValues=["","","","","","","","","","",""]
         self.variableValues2=["","","","","","","","","","",""]
-                  
-        #The order dictionaries are used to synchronize the order of varibles in textBoxes and 
-        #variableValues
-             
-                        #Position in 
-                        #variableValues
-                            #|
-                            #V
+
         order1={'transprot':(0,3),'osrcip':(3,15),'odstip':(4,15),'osrcport':(5,5),
                 'odstport':(6,5),'nsrcip':(7,15),'ndstip':(8,15),'nsrcport':(9,5),
                 'ndstport':(10,5)}
-                              #^
-                              #|
-                         #Max number of 
-                         #chars for this
-                         #variable
-        
         order2={'nsrcip':(13,15),'ndstip':(14,15),'nsrcport':(15,5),'ndstport':(16,5),
                 'osrcip':(17,15),'odstip':(18,15),'osrcport':(19,5),'odstport':(20,5)}
-         
+
         self.textBoxes[1]=textBox('Create this Tunnel(Y/N)',2,25,1)
         self.variableValues[1]=('enable','Y')
-        
+
         self.textBoxes[2]=textBox('Enable Persistence(Y/N)',3,25,1)
         self.variableValues[2]=('persist','N')
-        
+
         self.textBoxes[11]=textBox('Create this Tunnel(Y/N)',2,67,1)
         self.variableValues2[1]=('enable','Y')
-        
+
         self.textBoxes[12]=textBox('Enable Persistence(Y/N)',3,67,1)
         self.variableValues2[2]=('persist','N')
 
@@ -105,34 +92,30 @@ class CursesDriver:
                 index=order1[el[0]]
                 if index[0]==0:
                     self.textBoxes[index[0]]=textBox(el[1],0,25,index[1])
-                    self.variableValues[index[0]]=(el[0],"")
                 elif index[0]>6:
                     self.textBoxes[index[0]]=textBox(el[1],index[0]+10,18,index[1])
-                    self.variableValues[index[0]]=(el[0],"")
                 else:
                     self.textBoxes[index[0]]=textBox(el[1],index[0]+4,18,index[1])
-                    self.variableValues[index[0]]=(el[0],"")
+                self.variableValues[index[0]]=(el[0],"")
             except KeyError:
                 continue
-        
+
         for el in variables:
             try:
                 index=order2[el[0]]
                 if index[0]>16:
                     self.textBoxes[index[0]]=textBox(el[1],(index[0]-10)+10,61,index[1])
-                    self.variableValues2[index[0]-10]=(el[0],"")
                 else:
                     self.textBoxes[index[0]]=textBox(el[1],(index[0]-10)+4,61,index[1])
-                    self.variableValues2[index[0]-10]=(el[0],"")
-            
+                self.variableValues2[index[0]-10]=(el[0],"")
             except KeyError:
                 continue
-        
+
         self.neededRows=25
         self.neededCols=80
-        
+
         self.padScreen.resize(self.neededRows,self.neededCols)
-        
+
         self.__drawRedirScreen(variables)
         
     def __drawRedirScreen(self,variables):
@@ -160,12 +143,16 @@ class CursesDriver:
             self.padScreen.addstr(16,5,"Firewall to Target Packet")
             self.padScreen.addstr(16,48,"Target to Firewall Packet")
             for box in self.textBoxes:
-                self.padScreen.addstr(box.dispRow,box.dispCol-(len(box.dispText)+2),(box.dispText+": "))
+                self.padScreen.addstr(
+                    box.dispRow,
+                    box.dispCol - (len(box.dispText) + 2),
+                    f"{box.dispText}: ",
+                )
 
             self.padScreen.addstr(21,8,"-----------------------------Target------------------------------")
             self.padScreen.addstr(22,(self.neededCols/4),"Ctrl-G: Go    Ctrl-N: Clear Form")
             self.padScreen.addstr(23,(self.neededCols/4),"Ctrl-B: Back")
-        
+
         except:
             self.screen.keypad(0)
             curses.echo()
@@ -178,47 +165,32 @@ class CursesDriver:
         self.numVars=7
         self.textBoxes=["","","","","","",""]
         self.variableValues=["","","","","","",""]
-    
-                       #Position in 
-                       #variableValues
-                           #|
-                           #| Row to draw this variable on.
-                           #| | 
-                           #V V    
+
         order={'transprot':(0,0,3),'odstip':(2,3,15),'odstport':(3,4,5),
                'nsrcip':(4,7,15), 'nsrcportstart':(5,8,5),'nsrcportend':(6,8,5)}
-                               #^
-                               #|
-                          #Max number of 
-                          #chars for this
-                          #variable
-        
         self.textBoxes[1]=textBox('Enable Persistence(Y/N)',1,25,1)
         self.variableValues[1]=('persist','N')
-        
+
         for el in variables:
             try:
                 index=order[el[0]]
                 if index[0]==0:
                     self.textBoxes[index[0]]=textBox(el[1],index[1],25,index[2])
-                    self.variableValues[index[0]]=(el[0],"")
                 elif index[0]==5:
                     self.textBoxes[index[0]]=textBox(el[1],index[1],35,index[2])
-                    self.variableValues[index[0]]=(el[0],"")
                 elif index[0]==6:
                     self.textBoxes[index[0]]=textBox(el[1],index[1],45,index[2])
-                    self.variableValues[index[0]]=(el[0],"")
                 else:
                     self.textBoxes[index[0]]=textBox(el[1],index[1],24,index[2])
-                    self.variableValues[index[0]]=(el[0],"")
+                self.variableValues[index[0]]=(el[0],"")
             except KeyError:
                 continue
-        
+
         self.neededRows=22
         self.neededCols=80
-        
+
         self.padScreen.resize(self.neededRows,self.neededCols)
-        
+
         self.__drawOutScreen(variables)
         
     def __drawOutScreen(self,variables):
@@ -236,12 +208,16 @@ class CursesDriver:
             self.padScreen.addstr(15,10,"Src IP  : Any")
             self.padScreen.addstr(16,10,"Src Port: Any")
             for box in self.textBoxes:
-                self.padScreen.addstr(box.dispRow,box.dispCol-(len(box.dispText)+2),(box.dispText+": "))
-                 
+                self.padScreen.addstr(
+                    box.dispRow,
+                    box.dispCol - (len(box.dispText) + 2),
+                    f"{box.dispText}: ",
+                )
+
             self.padScreen.addstr(18,8,"----------------------------------------------Client")
             self.padScreen.addstr(19,(self.neededCols/4),"Ctrl-G: Go    Ctrl-N: Clear Form")
             self.padScreen.addstr(20,(self.neededCols/4),"Ctrl-B: Back")
-        
+
         except:
             self.screen.keypad(0)
             curses.echo()
@@ -251,36 +227,27 @@ class CursesDriver:
             return []
         
     def __initDefaultScreen(self,variables,numVars):
-    
+
         for el in variables:
             self.variableValues.append((el[0],""))
-            if self.longestVar<len(el[1]):
-                self.longestVar=len(el[1])
-            
-        currentRow=5
-        for el in variables:
+            self.longestVar = max(self.longestVar, len(el[1]))
+        for currentRow, el in enumerate(variables, start=5):
             self.textBoxes.append(textBox(el[1],currentRow,self.longestVar+8,22))
-            currentRow+=1
-                
         self.neededRows=numVars+6
         self.neededCols=self.longestVar+50
-        
+
         self.padScreen.resize(self.neededRows,self.neededCols)
-        
+
         self.__drawDefaultScreen(variables)
     
     def __drawDefaultScreen(self,variables):
         try:
-            currentRow=5
-                
-            for el in variables:
+            for currentRow, el in enumerate(variables, start=5):
                 dots=""
-                for i in range(0,self.longestVar-len(el[1])+5,1):
-                    dots=dots+"."
+                for _ in range(0,self.longestVar-len(el[1])+5,1):
+                    dots = f"{dots}."
                 self.padScreen.addstr(currentRow,2,(el[1]+dots+"["))
                 self.padScreen.addstr(currentRow,self.longestVar+30,("]"))
-                currentRow+=1
-                
             self.padScreen.addstr(2,(self.neededCols/4),"Ctrl-G: Go    Ctrl-N: Clear Form")
             self.padScreen.addstr(3,(self.neededCols/4),"Ctrl-B: Back")
         except:

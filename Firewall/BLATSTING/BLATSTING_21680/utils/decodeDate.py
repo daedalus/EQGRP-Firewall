@@ -5,7 +5,7 @@ import re
 
 def decode_status(date_string):
     m = re.search('(\d{2}):(\d{2}):(\d{2})\.(\d{3})',date_string);
-    if( m == None ):
+    if m is None:
         return -1;
     hh=m.groups()[0];
     mm=m.groups()[1];

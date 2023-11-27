@@ -14,13 +14,12 @@ MIX_TEXT_KEY_BYTE=0x47
 def mix(src, rand):
     global MIX_TEXT_KEY_BYTE
     prev = ""
-    retval = ""
     i = 0
 
     rand &= 0xff
-    
+
     prev = (i ^ rand ^ MIX_TEXT_KEY_BYTE)
-    retval += chr(prev)
+    retval = f"{chr(prev)}"
     i += 1
 
     for char in src:
@@ -30,8 +29,8 @@ def mix(src, rand):
         prev += value
         prev &= 0xff
         i += 1        
-        
-        
+
+
     return retval
 
 def unmix(src):

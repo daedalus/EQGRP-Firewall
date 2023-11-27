@@ -276,13 +276,11 @@ class InputProcessor(cmd.Cmd):
                 newDict = {ent:[]}
                 dict[dir.split('/')[-1]].append(newDict) 
                 self.recurseDir(os.path.join(dir,ent),newDict,depth+1, ex)
-            else:
-                if ent.find(ex)>=0:
-                    dict[dir.split('/')[-1]].append(ent) 
+            elif ent.find(ex)>=0:
+                dict[dir.split('/')[-1]].append(ent) 
 
     def buildListing(self, baseDir, recurse, ex):
-        dirListing={}
-        dirListing[baseDir] = []
+        dirListing = {baseDir: []}
         subDirs = os.listdir(baseDir)
         for item in subDirs:
             if os.path.isdir(os.path.join(baseDir,item)) and recurse == '1':
@@ -649,13 +647,11 @@ class InputProcessor(cmd.Cmd):
     def do_call(self,line):
         
         usrIn=line.split(" ")
-        if len(usrIn)!=1:
+        if len(usrIn) != 1 or usrIn[0] != "":
             return
             #print "Incorrect number of arguments.  Enter \'help call\' for usage information."
-        elif usrIn[0]=="":
-            res=self.functions.cmdCall(self.printBlocker)
         else:
-            return
+            res=self.functions.cmdCall(self.printBlocker)
             #print "Incorrect number of arguments.  Enter \'help call\' for usage information."
     
     #Prints help information to the user.  If no arguments are provided, it
@@ -719,11 +715,7 @@ class InputProcessor(cmd.Cmd):
         toSort = ifaceList.keys()
         toSort = sorted(toSort)
 
-        toReturn = []
-        for item in toSort:
-            toReturn.append(ifaceList[item])
-
-        return toReturn
+        return [ifaceList[item] for item in toSort]
 
     #Binding for help command        
     def do_h(self,line):
@@ -772,7 +764,6 @@ class InputProcessor(cmd.Cmd):
         self.architecture=inArch
     
     def __sort(self,modKey,toSort):
-        toReturn=[]
         fMaps={}
         fNums=[]
         for fName in toSort:
@@ -782,18 +773,11 @@ class InputProcessor(cmd.Cmd):
                 fNums.append(int(str(num).split('.')[1]))
 
         fNums=sorted(fNums)
-        for num in fNums:
-            toReturn.append(fMaps[num])
-
-        return toReturn
+        return [fMaps[num] for num in fNums]
     
     #Checks if there are any empty strings in a list returned by CursesDriver
     def __checkArg(self,toCheck):
-        for element in toCheck:
-            if element[1]=='':
-                return element[0]
-                
-        return True
+        return next((element[0] for element in toCheck if element[1]==''), True)
         
     def __resolveFuncName(self,name):
         try:

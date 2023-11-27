@@ -101,25 +101,19 @@ returns the new BinStore package.
 def buildPackage(map, size):
     package = ""
     numKeys = len(map.keys( ))
-    i = 0
-
-    if numKeys == 0:
-        firstOffset = 0
-    else:
-        firstOffset = struct.calcsize(BINSTORE_PAYLOAD_STRUCT)
-        
+    firstOffset = 0 if numKeys == 0 else struct.calcsize(BINSTORE_PAYLOAD_STRUCT)
     package += struct.pack(
         BINSTORE_PAYLOAD_STRUCT,
         3,
         size,
         0x00000000,
         firstOffset)
-    
-    for name in map.keys( ):
+
+    for i, name in enumerate(map.keys( )):
         value = map[name]
         name = MixText.mix(name, 0x42)
         value = MixText.mix(value, 0x42)
-        
+
         nameLen = len(name)
         valueLen = len(value)
         nameLenActual = ALIGN8(nameLen)
@@ -128,11 +122,7 @@ def buildPackage(map, size):
         nameOffset = len(package) + struct.calcsize(BINSTORE_DATAITEM_STRUCT)
         valueOffset = nameOffset + nameLenActual
 
-        if i != (numKeys-1):
-            nextOffset = valueOffset + valueLenActual
-        else:
-            nextOffset = 0
-
+        nextOffset = valueOffset + valueLenActual if i != (numKeys-1) else 0
         package += struct.pack(
             BINSTORE_DATAITEM_STRUCT,
             nameLen,
@@ -147,11 +137,9 @@ def buildPackage(map, size):
         package += value
         package += '\x00'*(valueLenActual - valueLen)
         "file=",
-        i += 1
-
     if len(package) > size:
         raise Exception, "The data to store is bigger than the BinStore package allows"
-    
+
     package += '\x00'*(size - len(package))
 
     return package
@@ -225,7 +213,7 @@ def insertNewPackage(fileBuf, newPackage):
             "Existing package is %d bytes, new package is %d bytes" %
             (len(existingPackage), len(newPackage)))
 
-    newFileBuf = fileBuf[0:start]
+    newFileBuf = fileBuf[:start]
     newFileBuf += newPackage
     newFileBuf += fileBuf[end:]
 
@@ -240,23 +228,22 @@ fileBuf - the entire file's contents where the BinStore package reides.
 returns a dict with the package's contents
 """
 def readValues(fileBuf):
-    nameValueMap = { }
     (package, start, end) = getPackage(fileBuf)
 
     (version, size, flags, itemOffset) = struct.unpack(
         BINSTORE_PAYLOAD_STRUCT,
-        package[0:][0:struct.calcsize(BINSTORE_PAYLOAD_STRUCT)])
+        package[:][: struct.calcsize(BINSTORE_PAYLOAD_STRUCT)],
+    )
 
     if version != 3:
         raise Exception, "Only know how to work with v3 BinStore"
 
     if itemOffset == 0:
         return { }
-    
+
     (name, value, nextOffset) = getDataItem(package, itemOffset)
 
-    nameValueMap[name] = value
-
+    nameValueMap = {name: value}
     while nextOffset != 0:
         (name, value, nextOffset) = getDataItem(package, nextOffset)
         nameValueMap[name] = value
@@ -284,9 +271,7 @@ def setValue(fileBuf, name, value):
     if len(newPackage) != len(package):
         raise Exception, "New package is not the same length as original"
 
-    newFileBuf = insertNewPackage(fileBuf, newPackage)
-
-    return newFileBuf
+    return insertNewPackage(fileBuf, newPackage)
 
 """
 Adds multiple name/value pairs to a fileBuf.  Essentially
@@ -320,12 +305,10 @@ returns a new file buffer with the BinStore package null'd out.
 """
 def wipe(fileBuf):
     (currentPackage, start, end) = getPackage(fileBuf)
-        
-    nullPackage = buildPackage({ }, len(currentPackage))
-    
-    newFileBuf = insertNewPackage(fileBuf, nullPackage)
 
-    return newFileBuf
+    nullPackage = buildPackage({ }, len(currentPackage))
+
+    return insertNewPackage(fileBuf, nullPackage)
 
 
 """

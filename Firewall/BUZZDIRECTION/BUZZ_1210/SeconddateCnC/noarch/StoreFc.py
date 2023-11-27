@@ -52,9 +52,9 @@ class ConfigParser(object):
     def StartElement(self, name, atts):
         if name == 'BinStoreConfig':
             return
-        
+
         if name != 'ConfigItem':
-            raise Exception, "Do not know how to parse element %s" % name
+            raise (Exception, f"Do not know how to parse element {name}")
 
         if not atts.has_key('name'):
             raise Exception, "configItem element must have a name attribute."
@@ -64,16 +64,15 @@ class ConfigParser(object):
                  atts.has_key('valueFromHex') ):
             raise Exception, (
                 "configItem element must have either a value, valueFromFile, or valuFromHex  attribute")
-        
+
         name = atts['name']
         if atts.has_key('value'):
             value = atts['value']
             value += '\x00'
         elif atts.has_key('valueFromFile'):
             filename = atts['valueFromFile']
-            f = open(filename, 'rb')
-            value = f.read( )
-            f.close( )
+            with open(filename, 'rb') as f:
+                value = f.read( )
         elif atts.has_key('valueFromHex'):
             value = binascii.a2b_hex(atts['valueFromHex'])
 

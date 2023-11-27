@@ -39,9 +39,8 @@ provided URL.
     output = header + data
 
     if options.outfile:
-        file = open(options.outfile, 'wb')
-        file.write(output)
-        file.close()
+        with open(options.outfile, 'wb') as file:
+            file.write(output)
     else:
         sys.stdout.write(output)
 
